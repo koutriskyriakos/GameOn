@@ -13,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import com.example.gameon.models.GamesModelList
 import com.example.gameon.models.GamesResponse
+import com.example.gameon.models.HeadlinesModelList
 import com.example.gameon.models.HeadlinesResponse
 
 @Composable
@@ -45,7 +47,7 @@ fun MainActivityView(mainUiState: MainUiState) {
 }
 
 @Composable
-fun MainContent(games: List<GamesResponse>, headlines: List<HeadlinesResponse>, modifier: Modifier) {
+fun MainContent(games: GamesModelList, headlines: HeadlinesModelList, modifier: Modifier) {
 
 }
 
@@ -79,8 +81,8 @@ fun ErrorScreenPreview() {
 @Composable
 fun MainContentPreview() {
     MainContent(
-        listOf(),
-        listOf(),
+        GamesModelList(listOf()),
+        HeadlinesModelList(listOf()),
         Modifier
     )
 }
@@ -99,6 +101,6 @@ class MainUiState {
         data object None : State
         data object Loading : State
         data class Error(val message: String) : State
-        data class Main(val games: List<GamesResponse>, val headlines: List<HeadlinesResponse>) : State
+        data class Main(val games: GamesModelList, val headlines: HeadlinesModelList) : State
     }
 }
