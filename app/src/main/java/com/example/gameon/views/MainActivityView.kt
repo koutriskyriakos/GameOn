@@ -3,20 +3,14 @@ package com.example.gameon.views
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
 import com.example.gameon.models.GamesModelList
-import com.example.gameon.models.GamesResponse
 import com.example.gameon.models.HeadlinesModelList
-import com.example.gameon.models.HeadlinesResponse
 
 @Composable
 fun MainActivityView(mainUiState: MainUiState) {
@@ -44,53 +38,6 @@ fun MainActivityView(mainUiState: MainUiState) {
         }
     }
 
-}
-
-@Composable
-fun MainContent(games: GamesModelList, headlines: HeadlinesModelList, modifier: Modifier) {
-
-}
-
-@Composable
-fun ErrorScreen(errorMessage: String) {
-    Text(
-        modifier = Modifier.fillMaxSize(),
-        text = errorMessage,
-        fontSize = 80.sp,
-        color = Color.Red
-    )
-}
-
-@Composable
-fun Loader() {
-    Text(
-        modifier = Modifier.fillMaxSize(),
-        text = "Loading...",
-        fontSize = 80.sp,
-        color = Color.Magenta
-    )
-}
-
-@Preview
-@Composable
-fun ErrorScreenPreview() {
-    ErrorScreen("Error message")
-}
-
-@Preview
-@Composable
-fun MainContentPreview() {
-    MainContent(
-        GamesModelList(listOf()),
-        HeadlinesModelList(listOf()),
-        Modifier
-    )
-}
-
-@Preview
-@Composable
-fun LoaderPreview() {
-    Loader()
 }
 
 @Stable
