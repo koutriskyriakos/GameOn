@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.gameon"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.gameon"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.runtime.livedata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -73,6 +74,7 @@ dependencies {
 
 // OkHttp (for logging HTTP requests)
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
 
 // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
