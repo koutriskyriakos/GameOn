@@ -31,10 +31,6 @@ fun MainActivityView(mainUiState: MainUiState) {
                     modifier = Modifier.padding(innerPadding)
                 )
             }
-
-            else -> {
-                // do nothing
-            }
         }
     }
 
@@ -42,10 +38,9 @@ fun MainActivityView(mainUiState: MainUiState) {
 
 @Stable
 class MainUiState {
-    var uiState: State by mutableStateOf(State.None)
+    var uiState: State by mutableStateOf(State.Loading)
 
     sealed interface State {
-        data object None : State
         data object Loading : State
         data class Error(val message: String) : State
         data class Main(val games: GamesModelList, val headlines: HeadlinesModelList) : State

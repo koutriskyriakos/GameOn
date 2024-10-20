@@ -1,5 +1,7 @@
 package com.example.gameon.viewModel
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gameon.api.ApiRepositoryImpl
@@ -15,6 +17,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Response
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class MainViewModel(
     private val apiRepositoryImpl: ApiRepositoryImpl
@@ -67,6 +72,7 @@ class MainViewModel(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun transformGamesResponse(gamesResponse: Response<List<GamesResponse>>): GamesModelList {
         val gamesList = gamesResponse.body()?.flatMap { games ->
             games.betViews.flatMap { betView ->
@@ -75,7 +81,7 @@ class MainViewModel(
                         GamesModel(
                             competitor1 = event.additionalCaptions.competitor1,
                             competitor2 = event.additionalCaptions.competitor2,
-                            elapsed = event.liveData.elapsed
+                            elapsed = formatElapsedTime(event.liveData.elapsed) ?: "Match Ended",
                         )
                     }
                 }
@@ -97,7 +103,21 @@ class MainViewModel(
         } ?: emptyList()
 
         return HeadlinesModelList(headlinesList = headlines)
+    }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun formatElapsedTime(elapsed: String): String? {
+        return try {
+            val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+            val elapsedTime = LocalTime.parse(elapsed.split(".")[0], formatter)
+
+            val totalMinutes = elapsedTime.hour * 60 + elapsedTime.minute
+            val seconds = elapsedTime.second
+
+            String.format("%d:%02d", totalMinutes, seconds)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private suspend fun update(body: () -> Unit) = withContext(Dispatchers.Main) {
