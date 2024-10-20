@@ -15,16 +15,13 @@ class ApiRepositoryImpl : ApiRepository {
         return apiService.loginUser(loginRequest)
     }
 
-
     override suspend fun getGames(authHeader: String): Response<List<GamesResponse>> {
         return apiService.getGames(authHeader)
     }
 
-
     override suspend fun getHeadlines(authHeader: String): Response<List<HeadlinesResponse>> {
         return apiService.getHeadlines(authHeader)
     }
-
 
     override suspend fun getUpdatedGames(authHeader: String): Response<List<GamesResponse>> {
         return apiService.getUpdatedGames(authHeader)

@@ -1,34 +1,25 @@
 package com.example.gameon.viewModel
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gameon.api.ApiRepositoryImpl
-import com.example.gameon.models.GamesModel
-import com.example.gameon.models.GamesModelList
-import com.example.gameon.models.GamesResponse
-import com.example.gameon.models.HeadlinesModel
-import com.example.gameon.models.HeadlinesModelList
-import com.example.gameon.models.HeadlinesResponse
 import com.example.gameon.views.MainUiState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import retrofit2.Response
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class MainViewModel(
-    private val apiRepositoryImpl: ApiRepositoryImpl
+    private val apiRepositoryImpl: ApiRepositoryImpl,
+    private val fetchDataUseCase: FetchDataUseCase
 ) : ViewModel() {
 
     val mainUiState: MainUiState = MainUiState()
+    private lateinit var authHeader: String
 
     fun initViewModel() {
         initialNetworkCalls()
+        startPolling()
     }
 
     private fun initialNetworkCalls() {
@@ -45,78 +36,47 @@ class MainViewModel(
                 return@launch
             }
 
-            val authHeader = "${loginResponse.body()?.type} ${loginResponse.body()?.token}"
-            try {
-                val gamesDeferred = async { apiRepositoryImpl.getGames(authHeader) }
-                val headlinesDeferred = async { apiRepositoryImpl.getHeadlines(authHeader) }
-                val gamesResponse = gamesDeferred.await()
-                val headlinesResponse = headlinesDeferred.await()
-                if (gamesResponse.isSuccessful && headlinesResponse.isSuccessful) {
-                    val gamesList = transformGamesResponse(gamesResponse)
-                    val headlinesList = transformHeadlinesResponse(headlinesResponse)
-                    update {
-                        mainUiState.uiState = MainUiState.State.Main(
-                            games = gamesList,
-                            headlines = headlinesList
-                        )
-                    }
-                } else {
-                    update { mainUiState.uiState = MainUiState.State.Error("Failed to fetch data") }
-                }
-            } catch (e: Exception) {
+            authHeader = "${loginResponse.body()?.type} ${loginResponse.body()?.token}"
+
+            val result = fetchDataUseCase.fetchData(
+                authHeader,
+                gamesCall = { apiRepositoryImpl.getGames(it) },
+                headlinesCall = { apiRepositoryImpl.getHeadlines(it) }
+            )
+
+            result.onSuccess {
+                update { mainUiState.uiState = it }
+            }.onFailure {
                 update {
                     mainUiState.uiState =
-                        MainUiState.State.Error("An error occurred: ${e.localizedMessage}")
+                        MainUiState.State.Error("An error occurred: ${it.localizedMessage}")
                 }
             }
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun transformGamesResponse(gamesResponse: Response<List<GamesResponse>>): GamesModelList {
-        val gamesList = gamesResponse.body()?.flatMap { games ->
-            games.betViews.flatMap { betView ->
-                betView.competitions.flatMap { competition ->
-                    competition.events.map { event ->
-                        GamesModel(
-                            competitor1 = event.additionalCaptions.competitor1,
-                            competitor2 = event.additionalCaptions.competitor2,
-                            elapsed = formatElapsedTime(event.liveData.elapsed) ?: "Match Ended",
-                        )
-                    }
-                }
+    private fun startPolling() {
+        viewModelScope.launch {
+            while (true) {
+                delay(10_000)
+                updateData()
             }
-        } ?: emptyList()
-
-        return GamesModelList(gamesList)
+        }
     }
 
-    private fun transformHeadlinesResponse(headlinesResponse: Response<List<HeadlinesResponse>>): HeadlinesModelList {
-        val headlines = headlinesResponse.body()?.flatMap { response ->
-            response.betViews.map { betView ->
-                HeadlinesModel(
-                    competitor1Caption = betView.competitor1Caption,
-                    competitor2Caption = betView.competitor2Caption,
-                    startTime = betView.startTime
-                )
+    private suspend fun updateData() {
+        val result = fetchDataUseCase.fetchData(
+            authHeader,
+            gamesCall = { apiRepositoryImpl.getUpdatedGames(it) },
+            headlinesCall = { apiRepositoryImpl.getUpdatedHeadlines(it) }
+        )
+        result.onSuccess {
+            update { mainUiState.uiState = it }
+        }.onFailure {
+            update {
+                mainUiState.uiState =
+                    MainUiState.State.Error("Error during update: ${it.localizedMessage}")
             }
-        } ?: emptyList()
-
-        return HeadlinesModelList(headlinesList = headlines)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun formatElapsedTime(elapsed: String): String? {
-        return try {
-            val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-            val elapsedTime = LocalTime.parse(elapsed.split(".")[0], formatter)
-
-            val totalMinutes = elapsedTime.hour * 60 + elapsedTime.minute
-            val seconds = elapsedTime.second
-
-            String.format("%d:%02d", totalMinutes, seconds)
-        } catch (e: Exception) {
-            null
         }
     }
 
