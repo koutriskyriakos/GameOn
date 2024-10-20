@@ -20,6 +20,7 @@ import androidx.compose.material.icons.twotone.ArrowDropDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gameon.models.GamesModel
 import com.example.gameon.models.GamesModelList
+import com.example.gameon.transformers.Timer
 
 @Composable
 fun GamesView(games: GamesModelList) {
@@ -91,6 +93,8 @@ fun GamesView(games: GamesModelList) {
 
 @Composable
 fun CardItem(game: GamesModel) {
+    val elapsedTime by game.timer.elapsedTime.collectAsState()
+
     Column(
         modifier = Modifier
             .padding(10.dp)
@@ -118,7 +122,7 @@ fun CardItem(game: GamesModel) {
                 TeamWithScore(game.competitor2)
             }
             Text(
-                text = game.elapsed,
+                text = elapsedTime,
                 color = Color.White,
                 fontSize = 15.sp,
                 modifier = Modifier.padding(start = 8.dp)
@@ -175,10 +179,10 @@ fun GamesViewPreview() {
     GamesView(
         GamesModelList(
             listOf(
-                GamesModel("competitor1", "competitor2", "25:58"),
-                GamesModel("competitor1", "competitor2", "6:23"),
-                GamesModel("competitor1", "competitor2", "6:23"),
-                GamesModel("competitor1", "competitor2", "6:23")
+                GamesModel("competitor1", "competitor2", Timer("6:23")),
+                GamesModel("competitor1", "competitor2", Timer("12:23")),
+                GamesModel("competitor1", "competitor2", Timer("58:23")),
+                GamesModel("competitor1", "competitor2", Timer("86:23"))
             )
         )
     )
@@ -187,7 +191,7 @@ fun GamesViewPreview() {
 @Preview
 @Composable
 fun CardItemPreview() {
-    CardItem(GamesModel("competitor1", "competitor2", "6:23"))
+    CardItem(GamesModel("competitor1", "competitor2", Timer("6:23")))
 }
 
 @Preview

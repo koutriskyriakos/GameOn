@@ -83,4 +83,12 @@ class MainViewModel(
     private suspend fun update(body: () -> Unit) = withContext(Dispatchers.Main) {
         body()
     }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        (mainUiState.uiState as? MainUiState.State.Main)?.games?.gamesList?.forEach { game ->
+            game.timer.stop()
+        }
+    }
 }

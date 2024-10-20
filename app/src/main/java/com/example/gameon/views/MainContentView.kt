@@ -13,6 +13,7 @@ import com.example.gameon.models.GamesModel
 import com.example.gameon.models.GamesModelList
 import com.example.gameon.models.HeadlinesModel
 import com.example.gameon.models.HeadlinesModelList
+import com.example.gameon.transformers.Timer
 
 
 @Composable
@@ -34,10 +35,10 @@ fun MainContentPreview() {
     MainContent(
         GamesModelList(
             listOf(
-                GamesModel("competitor1", "competitor2", "25:58"),
-                GamesModel("competitor1", "competitor2", "6:23"),
-                GamesModel("competitor1", "competitor2", "6:23"),
-                GamesModel("competitor1", "competitor2", "6:23")
+                GamesModel("competitor1", "competitor2", Timer("25:58")),
+                GamesModel("competitor1", "competitor2", Timer("25:58")),
+                GamesModel("competitor1", "competitor2", Timer("25:58")),
+                GamesModel("competitor1", "competitor2", Timer("25:58"))
             )
         ),
         HeadlinesModelList(

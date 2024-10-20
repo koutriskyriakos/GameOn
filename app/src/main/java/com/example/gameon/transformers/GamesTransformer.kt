@@ -15,10 +15,14 @@ class GamesTransformer {
             games.betViews.flatMap { betView ->
                 betView.competitions.flatMap { competition ->
                     competition.events.map { event ->
+                        val initialElapsedTime = formatElapsedTime(event.liveData.elapsed) ?: "Match Ended"
+                        val timer = Timer(initialElapsedTime)
+                        timer.start()
+
                         GamesModel(
                             competitor1 = event.additionalCaptions.competitor1,
                             competitor2 = event.additionalCaptions.competitor2,
-                            elapsed = formatElapsedTime(event.liveData.elapsed) ?: "Match Ended"
+                            timer = timer
                         )
                     }
                 }
