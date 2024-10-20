@@ -1,7 +1,7 @@
 package com.example.gameon.viewModel
 
-import com.example.gameon.models.GamesResponse
-import com.example.gameon.models.HeadlinesResponse
+import com.example.gameon.api.ApiRepositoryImpl
+import com.example.gameon.models.LoginResponse
 import com.example.gameon.transformers.GamesTransformer
 import com.example.gameon.transformers.HeadlinesTransformer
 import com.example.gameon.views.MainUiState
@@ -10,19 +10,23 @@ import kotlinx.coroutines.coroutineScope
 import retrofit2.Response
 
 class FetchDataUseCase(
+    private val apiRepositoryImpl: ApiRepositoryImpl,
     private val gamesTransformer: GamesTransformer,
     private val headlinesTransformer: HeadlinesTransformer
 ) {
 
+    suspend fun loginUser(): Response<LoginResponse> {
+        val result = apiRepositoryImpl.loginUser("your_first_name", "your_sire_name")
+        return result
+    }
+
     suspend fun fetchData(
-        authHeader: String,
-        gamesCall: suspend (String) -> Response<List<GamesResponse>>,
-        headlinesCall: suspend (String) -> Response<List<HeadlinesResponse>>
+        authHeader: String
     ): Result<MainUiState.State.Main> {
         return try {
             coroutineScope {
-                val gamesDeferred = async { gamesCall(authHeader) }
-                val headlinesDeferred = async { headlinesCall(authHeader) }
+                val gamesDeferred = async { apiRepositoryImpl.getGames(authHeader) }
+                val headlinesDeferred = async { apiRepositoryImpl.getHeadlines(authHeader) }
 
                 val gamesResponse = gamesDeferred.await()
                 val headlinesResponse = headlinesDeferred.await()

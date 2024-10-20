@@ -2,48 +2,47 @@ package com.example.gameon.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gameon.api.ApiRepositoryImpl
 import com.example.gameon.views.MainUiState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainViewModel(
-    private val apiRepositoryImpl: ApiRepositoryImpl,
     private val fetchDataUseCase: FetchDataUseCase
 ) : ViewModel() {
 
     val mainUiState: MainUiState = MainUiState()
-    private lateinit var authHeader: String
+    private var authHeader: String? = null
+
+    private var pollingJob: Job? = null
 
     fun initViewModel() {
         initialNetworkCalls()
-        startPolling()
     }
 
     private fun initialNetworkCalls() {
         viewModelScope.launch {
             update { mainUiState.uiState = MainUiState.State.Loading }
 
-            val loginResponse = apiRepositoryImpl.loginUser("your_first_name", "your_sire_name")
-
-            if (!loginResponse.isSuccessful || loginResponse.body() == null) {
+            val loginResult = fetchDataUseCase.loginUser()
+            if (loginResult.isSuccessful && loginResult.body() != null) {
+                authHeader = "${loginResult.body()?.type} ${loginResult.body()?.token}"
+                fetchData()
+                startPolling()
+            } else {
                 update {
                     mainUiState.uiState =
-                        MainUiState.State.Error("Login failed: ${loginResponse.errorBody()}")
+                        MainUiState.State.Error("Login failed: ${loginResult.errorBody()}")
                 }
-                return@launch
             }
+        }
+    }
 
-            authHeader = "${loginResponse.body()?.type} ${loginResponse.body()?.token}"
-
-            val result = fetchDataUseCase.fetchData(
-                authHeader,
-                gamesCall = { apiRepositoryImpl.getGames(it) },
-                headlinesCall = { apiRepositoryImpl.getHeadlines(it) }
-            )
-
+    private suspend fun fetchData() {
+        authHeader?.let { token ->
+            val result = fetchDataUseCase.fetchData(token)
             result.onSuccess {
                 update { mainUiState.uiState = it }
             }.onFailure {
@@ -55,27 +54,36 @@ class MainViewModel(
         }
     }
 
-    private fun startPolling() {
-        viewModelScope.launch {
-            while (true) {
-                delay(10_000)
-                updateData()
+    fun startPolling() {
+        if (pollingJob == null || pollingJob?.isActive == false) {
+            pollingJob = viewModelScope.launch {
+                while (true) {
+                    delay(10_000)
+                    authHeader?.let {
+                        updateData()
+                    }
+                }
             }
         }
     }
 
-    private suspend fun updateData() {
-        val result = fetchDataUseCase.fetchData(
-            authHeader,
-            gamesCall = { apiRepositoryImpl.getUpdatedGames(it) },
-            headlinesCall = { apiRepositoryImpl.getUpdatedHeadlines(it) }
-        )
-        result.onSuccess {
-            update { mainUiState.uiState = it }
-        }.onFailure {
-            update {
-                mainUiState.uiState =
-                    MainUiState.State.Error("Error during update: ${it.localizedMessage}")
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
+    }
+
+    fun updateData() {
+        viewModelScope.launch {
+            authHeader?.let { token ->
+                val result = fetchDataUseCase.fetchData(token)
+                result.onSuccess {
+                    update { mainUiState.uiState = it }
+                }.onFailure {
+                    update {
+                        mainUiState.uiState =
+                            MainUiState.State.Error("Error during update: ${it.localizedMessage}")
+                    }
+                }
             }
         }
     }

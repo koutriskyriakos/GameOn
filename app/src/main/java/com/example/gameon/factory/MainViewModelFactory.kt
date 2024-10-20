@@ -8,16 +8,14 @@ import com.example.gameon.transformers.HeadlinesTransformer
 import com.example.gameon.viewModel.FetchDataUseCase
 import com.example.gameon.viewModel.MainViewModel
 
-class MainViewModelFactory(
-    private val repository: ApiRepositoryImpl
-) : ViewModelProvider.Factory {
+class MainViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val repository = ApiRepositoryImpl()
         val gamesTransformer = GamesTransformer()
         val headlinesTransformer = HeadlinesTransformer()
-        val fetchDataUseCase = FetchDataUseCase(gamesTransformer, headlinesTransformer)
+        val fetchDataUseCase = FetchDataUseCase(repository, gamesTransformer, headlinesTransformer)
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             return MainViewModel(
-                repository,
                 fetchDataUseCase
             ) as T
         }

@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
-import com.example.gameon.api.ApiRepositoryImpl
 import com.example.gameon.factory.MainViewModelFactory
 import com.example.gameon.ui.theme.GameOnTheme
 import com.example.gameon.viewModel.MainViewModel
@@ -15,8 +14,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val apiRepositoryImpl = ApiRepositoryImpl()
-        val viewModelFactory = MainViewModelFactory(apiRepositoryImpl)
+        val viewModelFactory = MainViewModelFactory()
 
         viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         viewModel.initViewModel()
@@ -26,5 +24,16 @@ class MainActivity : ComponentActivity() {
                 MainActivityView(viewModel.mainUiState)
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.stopPolling()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        viewModel.updateData()
+        viewModel.startPolling()
     }
 }
